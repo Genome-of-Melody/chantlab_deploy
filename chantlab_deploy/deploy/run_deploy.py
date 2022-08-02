@@ -80,6 +80,8 @@ def main():
         check_call(['git', 'config', 'user.name', "docker"])
         check_call(['git', 'clone', 'https://github.com/SMNF-Project/chantlab_backend.git'])
 
+        os.chdir('chantlab_backend')
+
         check_call([pip, 'install', '-r', 'requirements.txt'])
         os.chdir(root_dir)
 
