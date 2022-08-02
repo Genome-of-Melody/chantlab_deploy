@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # install latest node
-RUN curl -sL https://deb.nodesource.com/setup_12.x  | bash - && apt-get -y install nodejs
+RUN curl -sL https://deb.nodesource.com/setup_16.x  | bash - && apt-get -y install nodejs
 
 # setup locale
 RUN locale-gen en_US.UTF-8
