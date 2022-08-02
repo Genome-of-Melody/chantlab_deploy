@@ -36,6 +36,9 @@ def main():
 
     os.chdir(root_dir)
 
+    if not os.path.isdir('modules'):
+        os.mkdir('modules')
+
 
     if args.client:
         print("\n\n\n======== run_deploy.py: Setting up front-end ====", file=sys.stderr)
