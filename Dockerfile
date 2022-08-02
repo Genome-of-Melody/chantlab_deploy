@@ -28,10 +28,10 @@ RUN npm install npm@latest -g && npm install -g @angular/cli
 RUN mkdir -p /opt
 
 # Clone this deployment repository
-RUN git clone --recursive http://github.com/SMNF-Project/chantlab-deploy
+RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
 
 # Set up apache
-RUN cp chantlab_deploy/chantlab-deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2ensite chantlab.conf && apachectl configtest
+RUN cp chantlab_deploy/chantlab_deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2ensite chantlab.conf && apachectl configtest
 
 # Run deploy script steps
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --client --dbdir /opt/chantlab/storage
