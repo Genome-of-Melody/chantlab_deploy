@@ -49,12 +49,15 @@ def main():
         check_call(['git', 'config', 'user.name', "docker"])
         check_call(['git', 'clone', 'https://github.com/SMNF-Project/chantlab_frontend.git'])
 
+        os.chdir('chantlab_frontend')
+
         # check_call(['sed', '-i', '-e', 's#routerLink="/imprint"#href="https://www.uni-wuerzburg.de/en/sonstiges/imprint-privacy-policy/"#g', 'src/app/app.component.html'])
         check_call(['npm', 'install'])
         check_call(['ng', 'update', '--all', '--force'])
         # check_call(['npm', 'audit', 'fix', '--audit-level', 'high'])
         for config in ['production']:
             check_call(['ng', 'build', '--configuration', config])
+
         os.chdir(root_dir)
 
 
