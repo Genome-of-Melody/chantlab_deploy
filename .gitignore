@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Others, from ommr4all-deploy
+.idea
+*swp
+*venv
+*Thumbs.db*
