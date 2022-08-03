@@ -42,5 +42,11 @@ RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --serversettings --d
 # RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --staticfiles --dbdir /opt/chantlab/storage
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --migrations --dbdir /opt/chantlab/storage
 
+
+# Instead of launching apache, try getting at least something up with development django & angular
+RUN cd chantlab_deploy/modules/chantlab_backend && python3 manage.py runserver
+RUN cd chantlab_deploy/modules/chantlab_backend && ng serve
+
 # launch apache
-CMD apachectl -D FOREGROUND
+# CMD apachectl -D FOREGROUND
+
