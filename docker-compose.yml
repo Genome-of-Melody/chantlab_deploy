@@ -7,6 +7,7 @@ services:
       - "80:4200"
     volumes:
       - /opt/chantlab/storage:/opt/chantlab/storage
+      - /opt/chantlab_deploy_staging_volume:/home/hajic/chantlab_deploy:ro
     depends_on:
       - migration
   migration:
@@ -15,3 +16,4 @@ services:
     command: /opt/chantlab/chantlab-deploy-venv/bin/python /opt/chantlab/chantlab_deploy/modules/chantlab_backend/manage.py migrate --noinput
     volumes:
       - /opt/chantlab/storage:/opt/chantlab/storage
+      - /opt/chantlab_deploy_staging_volume:/home/hajic/chantlab_deploy:ro

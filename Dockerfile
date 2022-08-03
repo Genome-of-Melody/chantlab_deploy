@@ -27,8 +27,12 @@ RUN npm install npm@latest -g && npm install -g @angular/cli
 # basic dirs
 RUN mkdir -p /opt
 
-# Clone this deployment repository
-RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
+# Clone this deployment repository... trying to NOT clone into container but rather keep
+# an up-to-date chantlab_deploy repo through a volume. This should make it easier to run
+# updates without having to re-install everything in the front-end and back-end.
+# RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
+# Instead, we copy from the volume to a chantlab_deploy
+RUN cp -r /opt/chantlab_deploy_staging_volume/chantlab_deploy .
 
 # Set up apache
 RUN cp chantlab_deploy/chantlab_deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2ensite chantlab.conf && apachectl configtest
@@ -44,8 +48,8 @@ RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --migrations --dbdir
 
 
 # Instead of launching apache, try getting at least something up with development django & angular
-RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --runserver --dbdir /opt/chantlab/storage
-RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --run_angular --dbdir /opt/chantlab/storage
+RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --runserver --dbdir /opt/chantlab/storage &
+RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --run_angular --dbdir /opt/chantlab/storage &
 
 # launch apache
 # CMD apachectl -D FOREGROUND
