@@ -83,6 +83,11 @@ def main():
         os.chdir('chantlab_backend')
 
         check_call([pip, 'install', '-r', 'requirements.txt'])
+
+        # CLTK setup
+        os.mkdir('/var/www/cltk_data')
+        check_call(['chmod', '777', '/var/www/cltk_data'])
+
         os.chdir(root_dir)
 
 
