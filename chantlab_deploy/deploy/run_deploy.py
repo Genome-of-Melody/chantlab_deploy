@@ -30,6 +30,9 @@ def main():
     parser.add_argument("--staticfiles", action='store_true')
     parser.add_argument("--migrations", action='store_true')
 
+    parser.add_argument("--runserver", action='store_true')
+    parser.add_argument("--run_angular", action='store_true')
+
     args = parser.parse_args()
 
     db_file = os.path.join(args.dbdir, db_file_name)
@@ -156,6 +159,27 @@ def main():
         # finally restart the service
         call(['/usr/sbin/service', 'apache2', 'start'])
         logger.info("Setup finished")
+        os.chdir(root_dir)
+
+
+    if args.runserver:
+        print("\n\n\n\n\n============= run_deploy.py: Starting the django dev server =========\n\n\n", file=sys.stderr)
+        logger.info('Starting Django dev server')
+        os.chdir('modules/chantlab_backend')
+
+        # This script is run from deploy.py already in the appropriate venv
+        check_call([python, 'manage.py', 'runserver'])
+
+        os.chdir(root_dir)
+
+    if args.run_angular:
+        print("\n\n\n\n\n============= run_deploy.py: Starting the Angular dev server =========\n\n\n", file=sys.stderr)
+        logger.info('Starting Angular server')
+        os.chdir('modules/chantlab_frontend')
+
+        # This script is run from deploy.py already in the appropriate venv
+        check_call(['ng', 'serve'])
+
         os.chdir(root_dir)
 
 

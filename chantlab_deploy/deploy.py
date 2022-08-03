@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--serversettings", action='store_true')
     parser.add_argument("--staticfiles", action='store_true')
     parser.add_argument("--migrations", action='store_true')
+    parser.add_argument("--runserver", action='store_true')
+    parser.add_argument("--run_angular", action='store_true')
 
     args = parser.parse_args()
 
@@ -33,7 +35,9 @@ def main():
                (['--server'] if args.server else []) +
                (['--serversettings'] if args.serversettings else []) +
                (['--staticfiles'] if args.staticfiles else []) +
-               (['--migrations'] if args.migrations else [])
+               (['--migrations'] if args.migrations else []) +
+               (['--runserver'] if args.runserver else []) +
+               (['--run_angular'] if args.run_angular else [])
                )
 
 
