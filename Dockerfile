@@ -38,7 +38,8 @@ RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --client --dbdir /op
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --venv --dbdir /opt/chantlab/storage
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --server --dbdir /opt/chantlab/storage
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --serversettings --dbdir /opt/chantlab/storage
-RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --staticfiles --dbdir /opt/chantlab/storage
+# Static files need not be collected for chantlab.
+# RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --staticfiles --dbdir /opt/chantlab/storage
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --migrations --dbdir /opt/chantlab/storage
 
 # launch apache
