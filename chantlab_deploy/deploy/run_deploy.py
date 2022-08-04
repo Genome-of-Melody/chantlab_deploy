@@ -168,7 +168,7 @@ def main():
         os.chdir('modules/chantlab_backend')
 
         # This script is run from deploy.py already in the appropriate venv
-        check_call([python, 'manage.py', 'runserver'])
+        check_call([python, 'manage.py', 'runserver', '&'])
 
         os.chdir(root_dir)
 
@@ -177,8 +177,9 @@ def main():
         logger.info('Starting Angular server')
         os.chdir('modules/chantlab_frontend')
 
-        # This script is run from deploy.py already in the appropriate venv
-        check_call(['ng', 'serve'])
+        # venv is not involved, since this is not a python call.
+        # --disable-host-check is a quick fix for "host not allowed" error. Should be done properly.
+        check_call(['ng', 'serve', '--disable-host-check', '&'])
 
         os.chdir(root_dir)
 

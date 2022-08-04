@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Enable Networking on port 8001 (apache)
 EXPOSE 8001
+# Expose the angular devserver port
+EXPOSE 4200
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -31,12 +33,9 @@ RUN mkdir -p /opt
 # an up-to-date chantlab_deploy repo through a volume. This should make it easier to run
 # updates without having to re-install everything in the front-end and back-end.
 RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
-# Instead, we copy from the volume to a chantlab_deploy
-# RUN cp -r /opt/chantlab_deploy_staging_volume/chantlab_deploy .
-# COPY /home/hajic/chantlab_deploy chantlab_deploy
 
 # Set up apache
-RUN cp chantlab_deploy/chantlab_deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2ensite chantlab.conf && apachectl configtest
+RUN cp chantlab_deploy/chantlab_deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2enmod proxy && a2enmod proxy_http && a2ensite chantlab.conf && apachectl configtest
 
 # Run deploy script steps
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --client --dbdir /opt/chantlab/storage
@@ -47,11 +46,10 @@ RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --serversettings --d
 # RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --staticfiles --dbdir /opt/chantlab/storage
 RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --migrations --dbdir /opt/chantlab/storage
 
-
 # Instead of launching apache, try getting at least something up with development django & angular
-RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --runserver --dbdir /opt/chantlab/storage &
-RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --run_angular --dbdir /opt/chantlab/storage &
+RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --runserver --dbdir /opt/chantlab/storage
+RUN cd chantlab_deploy && python3 chantlab_deploy/deploy.py --run_angular --dbdir /opt/chantlab/storage
 
 # launch apache
-# CMD apachectl -D FOREGROUND
+CMD apachectl -D FOREGROUND
 
