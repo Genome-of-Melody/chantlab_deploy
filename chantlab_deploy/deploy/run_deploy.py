@@ -165,21 +165,21 @@ def main():
     if args.runserver:
         print("\n\n\n\n\n============= run_deploy.py: Starting the django dev server =========\n\n\n", file=sys.stderr)
         logger.info('Starting Django dev server')
-        os.chdir('modules/chantlab_backend')
+        os.chdir(os.path.join(chantlab_dir, 'chantlab_deploy', 'modules/chantlab_backend'))
 
         # This script is run from deploy.py already in the appropriate venv
-        check_call([python, 'manage.py', 'runserver', '&'])
+        check_call([python, 'manage.py', 'runserver'])
 
         os.chdir(root_dir)
 
     if args.run_angular:
         print("\n\n\n\n\n============= run_deploy.py: Starting the Angular dev server =========\n\n\n", file=sys.stderr)
         logger.info('Starting Angular server')
-        os.chdir('modules/chantlab_frontend')
+        os.chdir(os.path.join(chantlab_dir, 'chantlab_deploy', 'modules/chantlab_frontend'))
 
         # venv is not involved, since this is not a python call.
         # --disable-host-check is a quick fix for "host not allowed" error. Should be done properly.
-        check_call(['ng', 'serve', '--disable-host-check', '&'])
+        check_call(['ng', 'serve', '--disable-host-check'])
 
         os.chdir(root_dir)
 
