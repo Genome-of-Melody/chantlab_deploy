@@ -30,9 +30,10 @@ RUN mkdir -p /opt
 # Clone this deployment repository... trying to NOT clone into container but rather keep
 # an up-to-date chantlab_deploy repo through a volume. This should make it easier to run
 # updates without having to re-install everything in the front-end and back-end.
-# RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
+RUN git clone --recursive http://github.com/SMNF-Project/chantlab_deploy.git
 # Instead, we copy from the volume to a chantlab_deploy
-RUN cp -r /opt/chantlab_deploy_staging_volume/chantlab_deploy .
+# RUN cp -r /opt/chantlab_deploy_staging_volume/chantlab_deploy .
+# COPY /home/hajic/chantlab_deploy chantlab_deploy
 
 # Set up apache
 RUN cp chantlab_deploy/chantlab_deploy/deploy/apache2.conf /etc/apache2/sites-available/chantlab.conf && a2ensite chantlab.conf && apachectl configtest
