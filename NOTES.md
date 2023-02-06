@@ -14,3 +14,5 @@ Easiest way: reverse proxy for just serving a running Angular app started via ng
 * Add `nginx.listening-on-this-public.url` to Django settings `ALLOWED_HOSTS` (otherwise you will get a `400 Bad Request` error for any requests to the backend).
 
 Next steps: running Django properly via gunicorn, and serving angular from a built distribution, because using dev servers is not recommended for a production environment.
+
+Persistence is currently handled by `supervisord`, with two scripts in `$HOME/chantlab_deployment`.
