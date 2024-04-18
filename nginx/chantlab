@@ -1,0 +1,45 @@
+upstream chantlab_backend {
+    server chantlab_backend:8000;
+}
+
+upstream genomel_editor {
+    server genomel_editor:7999;
+}
+
+upstream chantlab_frontend {
+    server chantlab_frontend:4200;
+}
+
+
+server {
+    listen 80;
+
+    server_name localhost;
+
+    location /api/chants {
+	    proxy_pass http://chantlab_backend/api/chants;
+	    proxy_http_version 1.1;
+	    proxy_set_header Upgrade $http_upgrade;
+	    proxy_set_header Connection $http_connection;
+	    proxy_set_header Host $host;
+	    proxy_cache_bypass $http_upgrade;
+    }
+
+    location /genomel_editor {
+        proxy_pass http://genomel_editor;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connecton $http_connection;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location / {
+        proxy_pass http://chantlab_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_set_header Host $host;
+	    proxy_cache_bypass $http_upgrade;
+    }
+}

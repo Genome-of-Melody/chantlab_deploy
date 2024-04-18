@@ -1,0 +1,88 @@
+version: "3"
+
+services:
+  chantlab_backend:
+    container_name: chantlab_backend
+    restart: always
+    build:
+      context: ./chantlab_backend
+      dockerfile: Dockerfile
+    environment:
+      - SUPER_USER_NAME=${SUPER_USER_NAME}
+      - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}
+      - SUPER_USER_EMAIL=${SUPER_USER_EMAIL}
+      - ALLOWED_HOST=${PUBLIC_URL}
+      - DEBUG_MODE=${DEBUG_MODE}
+    expose:
+      - 8000
+    ports:
+      - "8000:8000"
+    networks:
+        chantlab_network:
+            aliases:
+                - chantlab_backend
+
+  chantlab_frontend:
+    container_name: chantlab_frontend
+    restart: always
+    build:
+      context: ./chantlab_frontend
+      dockerfile: Dockerfile
+    environment:
+      - PUBLIC_HOST=${PUBLIC_URL}
+      - BACKEND_URL=http://${PUBLIC_URL}/api/chants
+      - DEBUG_MODE=${DEBUG_MODE}
+    depends_on:
+      - chantlab_backend
+    expose:
+      - 4200
+    ports:
+      - "4200:4200"
+    networks:
+        chantlab_network:
+            aliases:
+                - chantlab_frontend
+
+  genomel_editor:
+    container_name: genomel_editor
+    restart: always
+    build:
+      context: ./genomel_editor
+      dockerfile: Dockerfile
+    environment:
+      - SUPER_USER_NAME=${SUPER_USER_NAME}
+      - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}
+      - SUPER_USER_EMAIL=${SUPER_USER_EMAIL}
+      - ALLOWED_HOST=${PUBLIC_URL}
+      - DEBUG_MODE=${DEBUG_MODE}
+    expose:
+      - 7999
+    depends_on:
+      - chantlab_backend
+      - chantlab_frontend
+    ports:
+      - "7999:7999"
+    networks:
+        chantlab_network:
+            aliases:
+                - genomel_editor
+
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    expose:
+      - 80
+    ports:
+      - 80:80
+    depends_on:
+      - chantlab_backend
+      - chantlab_frontend
+      - genomel_editor
+    networks:
+        chantlab_network:
+            aliases:
+                - nginx
+networks:
+  chantlab_network:
+    driver: bridge
