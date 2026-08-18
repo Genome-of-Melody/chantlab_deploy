@@ -2,10 +2,6 @@ upstream chantlab_backend {
     server chantlab_backend:8000;
 }
 
-upstream genomel_editor {
-    server genomel_editor:7999;
-}
-
 upstream chantlab_frontend {
     server chantlab_frontend:4200;
 }
@@ -27,15 +23,6 @@ server {
         proxy_send_timeout 600s;
         proxy_read_timeout 600s;
         send_timeout 600s;
-    }
-
-    location /genomel_editor {
-        proxy_pass http://genomel_editor;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connecton $http_connection;
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
     }
 
     location / {

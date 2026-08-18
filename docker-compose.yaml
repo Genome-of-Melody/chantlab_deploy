@@ -14,6 +14,7 @@ services:
       - ALLOWED_HOST=${PUBLIC_URL}
       - DEBUG_MODE=${DEBUG_MODE}
       - DATABASE_PATH=/opt/chantlab_backend/data/chants.db
+      - FORCE_SCRIPT_NAME=${FORCE_SCRIPT_NAME:-}
     volumes:
       # Bind-mount a host directory (not the .db file). Mounting a missing
       # file makes Docker create a folder named chants.db instead.
@@ -48,30 +49,6 @@ services:
             aliases:
                 - chantlab_frontend
 
-  genomel_editor:
-    container_name: genomel_editor
-    restart: always
-    build:
-      context: ./genomel_editor
-      dockerfile: Dockerfile
-    environment:
-      - SUPER_USER_NAME=${SUPER_USER_NAME}
-      - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}
-      - SUPER_USER_EMAIL=${SUPER_USER_EMAIL}
-      - ALLOWED_HOST=${PUBLIC_URL}
-      - DEBUG_MODE=${DEBUG_MODE}
-    expose:
-      - 7999
-    depends_on:
-      - chantlab_backend
-      - chantlab_frontend
-    ports:
-      - "7999:7999"
-    networks:
-        chantlab_network:
-            aliases:
-                - genomel_editor
-
   nginx:
     container_name: nginx
     restart: always
@@ -83,7 +60,6 @@ services:
     depends_on:
       - chantlab_backend
       - chantlab_frontend
-      - genomel_editor
     networks:
         chantlab_network:
             aliases:

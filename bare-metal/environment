@@ -1,0 +1,13 @@
+# Merge these into /etc/environment (PAM; visible to supervisord after a reboot
+# or a new login). Do not put real passwords in git.
+# Copy: sudo nano /etc/environment
+
+SUPER_USER_NAME="your_admin_name"
+SUPER_USER_PASSWORD="your_admin_password"
+SUPER_USER_EMAIL="your_admin@example.com"
+ALLOWED_HOST="example.com"
+DEBUG_MODE="False"
+BACKEND_URL="https://example.com/chantlab/api/chants"
+PUBLIC_HOST="example.com"
+FORCE_SCRIPT_NAME="/chantlab"
+MAFFT_PATH="/opt/conda/bin/mafft"

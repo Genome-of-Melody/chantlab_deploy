@@ -3,12 +3,11 @@
 ## How to deploy
 1. install Docker [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
 2. clone this repository `git clone https://github.com/Genome-of-Melody/chantlab_deploy.git`
-3. clone all chantlab projects (chantlab frontend, chantlab backend, genomel editor) into this directory 
+3. clone all chantlab projects (chantlab frontend, chantlab backend) into this directory 
       ```sh
       cd chantlab_deploy
       git clone https://github.com/Genome-of-Melody/chantlab_backend
       git clone https://github.com/Genome-of-Melody/chantlab_frontend
-      git clone https://github.com/Genome-of-Melody/genomel_editor
       ```
    The structure of the chantlab_deploy directory
    ```
@@ -23,15 +22,11 @@
       │   ├── Dockerfile
       │   └── ...
       │
-      ├── genomel_editor
-      │   ├── ...
-      │   ├── Dockerfile
-      │   └── ...
-      │
       ├── nginx
       │   ├── chantlab
       │   └── Dockerfile
       │
+      ├── bare-metal/            # supervisord scripts for install without Docker
       ├── .env
       │
       └── docker-compose.yaml   # host volume: ./chantlab_backend/data
@@ -46,8 +41,9 @@
    DEBUG_MODE="False"
    ``` 
    - ***PUBLIC_URL*** stands for the URL that the application will be running on (e.g. chantlab.mua.cas.cz, localhost, etc.)
-   - ***SUPER_USER_NAME***, ***SUPER_USER_PASSWORD***, ***SUPER_USER_EMAIL*** variables set the super user admin account for django chantlab backend and genomel editor
-   - ***DEBUG_MODE*** specifies whether we run the application in debug ("True") or production ("False") mode 
+   - ***SUPER_USER_NAME***, ***SUPER_USER_PASSWORD***, ***SUPER_USER_EMAIL*** variables set the super user admin account for the django chantlab backend
+   - ***DEBUG_MODE*** specifies whether we run the application in debug ("True") or production ("False") mode
+   - optional when the app is not at `/`: ***FORCE_SCRIPT_NAME*** (e.g. `/chantlab`); set ***BACKEND_URL*** to the full public API URL (the Angular base href is derived from it) 
 5. Run the application via the docker compose command 
    ```sh
    docker-compose up -d --build
@@ -65,7 +61,7 @@
 
 ## Deployment of a single subprojects
 
-In case you need to deploy only one of provided projects (chantlab_backend, genomel_editor, ...), you can either go through its Dockerfile and follow all installation steps manually, or you can use again Docker
+In case you need to deploy only one of provided projects (chantlab_backend, chantlab_frontend), you can either go through its Dockerfile and follow all installation steps manually, or you can use again Docker
 1. install Docker [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
 2. clone the project's repo, e.g. `git clone https://github.com/Genome-of-Melody/chantlab_backend`
 3. go inside and build the image, e.g.
@@ -76,7 +72,6 @@ In case you need to deploy only one of provided projects (chantlab_backend, geno
    ```
    - the backend api runs on the localhost:8000/api/chants
    - in case of chantlab_frontend replace ports 8000:8000 by 4200:4200 (then the frontend runs on the localhost:4200)
-   - in case of genomel_editor replace ports 8000:8000 by 7999:7999 (then the genomel editor runs on the localhost:7999)
    - if you need to set one of environment variables, add them in the last command this way (the list of environmental variables for the specific sub-project could be find in the ./docker-compose.yaml file) 
      
      ```sh
@@ -84,26 +79,221 @@ In case you need to deploy only one of provided projects (chantlab_backend, geno
      ```
 
 
-## Notes
-There are other options than Docker to deploy chantlab.
+## Deploy backend + frontend without Docker (nginx, gunicorn, ng serve, supervisord)
 
-### Via nginx and dev servers
-Easiest way: reverse proxy for just serving a running Angular app started via ng serve.
+Use this on a shared host (for example a cluster node) where Docker is not available. Configuration lives in **`/etc/environment`**.
 
-* Create `/etc/nginx/sites-available/chantlab`. Configure the reverse proxy to the localhost port at which `ng serve` is running (default: 4200). Note that the `server_name` must correspond to the public-facing URL.
-* Add link to chantlab to `/etc/nginx/sites-enabled`.
-* When starting `ng serve`, run with `--host 127.0.0.1 --port 4200 --public-host nginx.listening-on-this-public.url`. (If `--public-host` is not set, there will be an "Invalid host header" page served by nginx.)
-* Add reverse proxy entry to nginx config for `location /api/chants` that points to `http://localhost:8000/api/chants`.
-* Configure `BACKEND_URL` in `src/app/config` to `nginx.listening-on-this-public.url/api/chants`
-* Add `nginx.listening-on-this-public.url` to Django settings `ALLOWED_HOSTS` (otherwise you will get a `400 Bad Request` error for any requests to the backend).
+Ready-made files are in `bare-metal/`:
 
-Next steps: running Django properly via gunicorn, and serving angular from a built distribution, because using dev servers is not recommended for a production environment.
+| File | Copy to |
+|---|---|
+| `environment` | merge into `/etc/environment` |
+| `run_chantlab_backend.sh` | `/opt/run_chantlab_backend.sh` |
+| `run_chantlab_frontend.sh` | `/opt/run_chantlab_frontend.sh` |
+| `run_chantlab_backend.conf` | `/etc/supervisor/conf.d/run_chantlab_backend.conf` |
+| `run_chantlab_frontend.conf` | `/etc/supervisor/conf.d/run_chantlab_frontend.conf` |
+| `chantlab` | `/etc/nginx/sites-available/chantlab` (symlink in `sites-enabled/`) |
 
-Persistence is currently handled by `supervisord`, with two scripts in `$HOME/chantlab_deployment`.
+Paths `/opt/chantlab_backend` and `/opt/chantlab_frontend` match the Docker layout. If the clones live somewhere else, set `CHANTLAB_BACKEND_ROOT` at the top of `run_chantlab_backend.sh` and `CHANTLAB_FRONTEND_ROOT` at the top of `run_chantlab_frontend.sh`.
 
+### 1. Install system packages
 
-### ToDo
- - webhook chantlab_backend, chantlab_frontend and genomel_editor with their github repos commits into the main branch 
-   - GitHub Actions in each repo to build and push images into private Docker Hub repo
-   - docker-compose.yaml uses watchtower image to monitor Docker Hub changes
-   - the third step in deployment could be ignored then
+```sh
+# Python / process manager / reverse proxy / MrBayes build deps
+sudo apt-get update
+sudo apt-get install -y supervisor nginx python3 build-essential git wget cmake \
+    libreadline-dev libncurses5-dev zlib1g-dev libssl-dev
+
+# Node 24 (Angular)
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+sudo apt-get install -y nodejs
+sudo npm install -g npm@latest
+
+# MAFFT (used at /opt/conda/bin/mafft by default)
+sudo apt-get install -y mafft
+# or: conda install -c bioconda mafft
+```
+
+Miniconda (if not already present):
+
+```sh
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+bash ~/miniconda.sh -b -p /opt/conda
+rm ~/miniconda.sh
+/opt/conda/bin/conda init bash
+# log out and back in, or: source /opt/conda/etc/profile.d/conda.sh
+conda create -n chantlab python=3.11
+```
+
+### 2. Clone the apps
+
+```sh
+sudo mkdir -p /opt
+sudo git clone https://github.com/Genome-of-Melody/chantlab_backend /opt/chantlab_backend
+sudo git clone https://github.com/Genome-of-Melody/chantlab_frontend /opt/chantlab_frontend
+sudo mkdir -p /opt/chantlab_backend/data
+```
+
+### 3. Python and Node dependencies
+
+```sh
+source /opt/conda/etc/profile.d/conda.sh
+conda activate chantlab
+python -m pip install --upgrade pip
+pip install -r /opt/chantlab_backend/requirements.txt
+pip install chant21==0.4.6 --no-deps
+
+cd /opt/chantlab_frontend
+npm install
+```
+
+### 4. MrBayes
+
+Phylogeny uses the `mb` binary. Install the volpiano-aware fork the same way as the backend Dockerfile: clone to `/opt/mrbayes`, then `configure` / `make` / `make install` (that puts `mb` in `/usr/local/bin`).
+
+```sh
+sudo git clone --depth=1 https://github.com/Genome-of-Melody/mrbayes_volpiano.git /opt/mrbayes
+cd /opt/mrbayes
+./configure
+make
+sudo make install
+which mb
+```
+
+`make install` writes `/usr/local/bin/mb`. The backend calls `mb` on `PATH`; do not skip this step.
+
+### 5. Persistent environment: `/etc/environment`
+
+Set these variables in **`/etc/environment`** (not in the git repos, not in a terminal `export`). Supervisor does not read `~/.bashrc`. Edit that file, then reboot or start a new login so supervisord sees the new values.
+
+```sh
+sudo nano /etc/environment
+```
+
+Template: `bare-metal/environment`. Put your own `SUPER_USER_*` values there; do not commit real passwords. Replace `example.com` with your public hostname.
+
+```sh
+SUPER_USER_NAME="your_admin_name"
+SUPER_USER_PASSWORD="your_admin_password"
+SUPER_USER_EMAIL="your_admin@example.com"
+ALLOWED_HOST="example.com"
+DEBUG_MODE="False"
+BACKEND_URL="https://example.com/chantlab/api/chants"
+PUBLIC_HOST="example.com"
+FORCE_SCRIPT_NAME="/chantlab"
+MAFFT_PATH="/opt/conda/bin/mafft"
+```
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `ALLOWED_HOST` | Django | Host header |
+| `FORCE_SCRIPT_NAME` | Django | URL prefix, e.g. `/chantlab` |
+| `MAFFT_PATH` | backend | MAFFT binary (default `/opt/conda/bin/mafft`) |
+| `BACKEND_URL` | frontend | written into `src/app/config.json` by `jq` in the run script |
+| `PUBLIC_HOST` | `ng serve --public-host` | public hostname |
+| `DEBUG_MODE` | Django / Angular | `"False"` for production |
+| `SUPER_USER_*` | backend run script | `createsuperuser` on first start |
+
+### 6. Install the run scripts
+
+```sh
+sudo cp chantlab_deploy/bare-metal/run_chantlab_backend.sh /opt/run_chantlab_backend.sh
+sudo cp chantlab_deploy/bare-metal/run_chantlab_frontend.sh /opt/run_chantlab_frontend.sh
+sudo chmod +x /opt/run_chantlab_backend.sh /opt/run_chantlab_frontend.sh
+```
+
+Edit the clone paths if they are not under `/opt`:
+
+```sh
+# /opt/run_chantlab_backend.sh
+CHANTLAB_BACKEND_ROOT=/opt/chantlab_backend
+
+# /opt/run_chantlab_frontend.sh
+CHANTLAB_FRONTEND_ROOT=/opt/chantlab_frontend
+```
+
+`run_chantlab_backend.sh` activates conda, `cd`s to `CHANTLAB_BACKEND_ROOT`, migrates, collectstatic, then gunicorn.
+
+`run_chantlab_frontend.sh` `cd`s to `CHANTLAB_FRONTEND_ROOT`, writes `BACKEND_URL` into `src/app/config.json` with `jq`, then `ng serve`. Do not edit `index.html` or `config.json` after pull.
+
+### 7. Supervisord
+
+Debian/Ubuntu already has `/etc/supervisor/supervisord.conf` with `[include] files = /etc/supervisor/conf.d/*.conf`.
+
+```sh
+sudo cp chantlab_deploy/bare-metal/run_chantlab_backend.conf /etc/supervisor/conf.d/run_chantlab_backend.conf
+sudo cp chantlab_deploy/bare-metal/run_chantlab_frontend.conf /etc/supervisor/conf.d/run_chantlab_frontend.conf
+```
+
+Start (same command as in Docker):
+
+```sh
+sudo /usr/bin/python3 /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+```
+
+If supervisord is already running as a systemd service:
+
+```sh
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start chantlab_backend chantlab_frontend
+```
+
+Logs:
+
+* `/var/log/run_chantlab_backend.out.log` / `.err.log`
+* `/var/log/run_chantlab_frontend.out.log` / `.err.log`
+
+Stop everything before an update:
+
+```sh
+sudo supervisorctl stop chantlab_backend chantlab_frontend
+# or, if you started supervisord by hand:
+pkill -f "supervisord"
+pkill -f "gunicorn"
+pkill -f "ng serve"
+```
+
+### 8. nginx
+
+The nginx site file is `bare-metal/chantlab` (copy to `/etc/nginx/sites-available/chantlab`, symlink from `sites-enabled/`). Set `server_name` to your public hostname.
+
+```sh
+sudo cp chantlab_deploy/bare-metal/chantlab /etc/nginx/sites-available/chantlab
+sudo ln -sf /etc/nginx/sites-available/chantlab /etc/nginx/sites-enabled/chantlab
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+## Update with new code
+
+Do **not** rewrite `backend/settings.py`, `src/index.html`, or `src/app/config.json`. Change **`/etc/environment`** only if the public URL, prefix, or MAFFT path changed.
+
+```sh
+# 1. Stop running processes
+pkill -f "supervisord"
+pkill -f "gunicorn"
+pkill -f "ng serve"
+
+# 2. Activate conda
+conda activate chantlab
+
+# 3. Pull backend
+cd /opt/chantlab_backend
+git reset --hard
+git pull
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install chant21==0.4.6 --no-deps
+
+# 4. Pull frontend
+cd /opt/chantlab_frontend
+git reset --hard
+git pull
+npm install -g npm@latest
+npm install
+
+# 5. Start again
+/usr/bin/python3 /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+```
+
+`git reset --hard` restores stock `config.json`. The frontend run script writes `BACKEND_URL` from `/etc/environment` into that file with `jq`.
