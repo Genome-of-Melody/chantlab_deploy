@@ -14,7 +14,7 @@
    ```
    └── chantlab_deploy
       ├── chantlab_backend
-      │   ├── ...
+      │   ├── data/              # persisted SQLite (chants.db), bind-mounted by compose
       │   ├── Dockerfile
       │   └── ...
       │
@@ -34,7 +34,7 @@
       │
       ├── .env
       │
-      └── docker-compose.yaml
+      └── docker-compose.yaml   # host volume: ./chantlab_backend/data
    ```
 
 4. set the environmental variables in the `.env` file, e.g.
@@ -52,6 +52,16 @@
    ```sh
    docker-compose up -d --build
    ```
+   Persistence is configured in `docker-compose.yaml`, not in the backend Dockerfile. A Dockerfile cannot map a container path onto a specific host folder; that is a *run-time* bind mount:
+
+   ```yaml
+   volumes:
+     - ./chantlab_backend/data:/opt/chantlab_backend/data
+   ```
+
+   Local `runserver` and Docker both use `chantlab_backend/data/chants.db`. The file survives `docker-compose down` / image rebuilds and can be copied from the host. Stop the backend container first if you need a consistent snapshot.
+
+   If Docker previously created a **folder** named `chants.db`, delete that folder before starting — that happens when a missing *file* is bind-mounted. Always mount the `data/` directory, never the `.db` file itself.
 
 ## Deployment of a single subprojects
 
@@ -62,7 +72,7 @@ In case you need to deploy only one of provided projects (chantlab_backend, geno
    ```sh
    cd chantlab_backend
    docker build -t chantlab_backend .
-   docker run -p 8000:8000 chantlab_backend
+   docker run -p 8000:8000 -v "${PWD}/data:/opt/chantlab_backend/data" chantlab_backend
    ```
    - the backend api runs on the localhost:8000/api/chants
    - in case of chantlab_frontend replace ports 8000:8000 by 4200:4200 (then the frontend runs on the localhost:4200)
@@ -70,7 +80,7 @@ In case you need to deploy only one of provided projects (chantlab_backend, geno
    - if you need to set one of environment variables, add them in the last command this way (the list of environmental variables for the specific sub-project could be find in the ./docker-compose.yaml file) 
      
      ```sh
-     docker run -e "ALLOWED_HOST=localhost" -e "DEBUG_MODE=False" -p 8000:8000 chantlab_backend
+     docker run -e "ALLOWED_HOST=localhost" -e "DEBUG_MODE=False" -p 8000:8000 -v "${PWD}/data:/opt/chantlab_backend/data" chantlab_backend
      ```
 
 

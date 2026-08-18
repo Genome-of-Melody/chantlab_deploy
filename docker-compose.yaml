@@ -13,6 +13,11 @@ services:
       - SUPER_USER_EMAIL=${SUPER_USER_EMAIL}
       - ALLOWED_HOST=${PUBLIC_URL}
       - DEBUG_MODE=${DEBUG_MODE}
+      - DATABASE_PATH=/opt/chantlab_backend/data/chants.db
+    volumes:
+      # Bind-mount a host directory (not the .db file). Mounting a missing
+      # file makes Docker create a folder named chants.db instead.
+      - ./chantlab_backend/data:/opt/chantlab_backend/data
     expose:
       - 8000
     ports:
