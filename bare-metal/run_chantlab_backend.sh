@@ -1,8 +1,12 @@
 #!/bin/bash
 
 CHANTLAB_BACKEND_ROOT=/opt/chantlab_backend
+# Miniconda prefix (`conda info --base`). Override here or set CONDA_ROOT in /etc/environment.
+CONDA_ROOT=${CONDA_ROOT:-/opt/conda}
 
 # Script that supervisor uses to keep the chantlab back-end running.
+# Supervisord is not a login shell, so conda init in ~/.bashrc never runs.
+. "${CONDA_ROOT}/etc/profile.d/conda.sh"
 if ! ps ax | grep -v grep | grep "chantlab/bin/gunicorn --timeout 600 --workers 4 backend.wsgi:application --bind 0.0.0.0:8000" > /dev/null
 then
     # Log restart

@@ -94,7 +94,7 @@ Ready-made files are in `bare-metal/`:
 | `run_chantlab_frontend.conf` | `/etc/supervisor/conf.d/run_chantlab_frontend.conf` |
 | `chantlab` | `/etc/nginx/sites-available/chantlab` (symlink in `sites-enabled/`) |
 
-Paths `/opt/chantlab_backend` and `/opt/chantlab_frontend` match the Docker layout. If the clones live somewhere else, set `CHANTLAB_BACKEND_ROOT` at the top of `run_chantlab_backend.sh` and `CHANTLAB_FRONTEND_ROOT` at the top of `run_chantlab_frontend.sh`.
+Paths `/opt/chantlab_backend` and `/opt/chantlab_frontend` match the Docker layout. If the clones live somewhere else, set `CHANTLAB_BACKEND_ROOT` / `CHANTLAB_FRONTEND_ROOT` at the top of the run scripts. Conda is assumed at `/opt/conda`; if yours is elsewhere, set `CONDA_ROOT` there (or in `/etc/environment`) to the output of `conda info --base`. Supervisord does not load `~/.bashrc`, so the scripts source `$CONDA_ROOT/etc/profile.d/conda.sh` before `conda activate`.
 
 ### 1. Install system packages
 
@@ -202,17 +202,19 @@ sudo cp chantlab_deploy/bare-metal/run_chantlab_frontend.sh /opt/run_chantlab_fr
 sudo chmod +x /opt/run_chantlab_backend.sh /opt/run_chantlab_frontend.sh
 ```
 
-Edit the clone paths if they are not under `/opt`:
+Edit the clone paths and conda prefix if they are not under `/opt`:
 
 ```sh
 # /opt/run_chantlab_backend.sh
 CHANTLAB_BACKEND_ROOT=/opt/chantlab_backend
+CONDA_ROOT=/opt/conda          # or: conda info --base
 
 # /opt/run_chantlab_frontend.sh
 CHANTLAB_FRONTEND_ROOT=/opt/chantlab_frontend
+CONDA_ROOT=/opt/conda
 ```
 
-`run_chantlab_backend.sh` activates conda, `cd`s to `CHANTLAB_BACKEND_ROOT`, migrates, collectstatic, then gunicorn.
+`run_chantlab_backend.sh` sources `$CONDA_ROOT/etc/profile.d/conda.sh`, activates conda, `cd`s to `CHANTLAB_BACKEND_ROOT`, migrates, collectstatic, then gunicorn.
 
 `run_chantlab_frontend.sh` `cd`s to `CHANTLAB_FRONTEND_ROOT`, writes `BACKEND_URL` into `src/app/config.json` with `jq`, then `ng serve`. Do not edit `index.html` or `config.json` after pull.
 
