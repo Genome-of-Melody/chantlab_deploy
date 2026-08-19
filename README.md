@@ -187,7 +187,7 @@ MAFFT_PATH="/opt/conda/bin/mafft"
 | Variable | Used by | Purpose |
 |---|---|---|
 | `ALLOWED_HOST` | Django | Host header |
-| `FORCE_SCRIPT_NAME` | Django | URL prefix, e.g. `/chantlab` |
+| `FORCE_SCRIPT_NAME` | Django + frontend | URL prefix, e.g. `/chantlab`. Frontend run script writes it into `<base href>` in `src/index.html` |
 | `MAFFT_PATH` | backend | MAFFT binary (default `/opt/conda/bin/mafft`) |
 | `BACKEND_URL` | frontend | written into `src/app/config.json` by `jq` in the run script |
 | `PUBLIC_HOST` | `ng serve --public-host` | public hostname |
@@ -216,7 +216,7 @@ CONDA_ROOT=/opt/conda
 
 `run_chantlab_backend.sh` sources `$CONDA_ROOT/etc/profile.d/conda.sh`, activates conda, `cd`s to `CHANTLAB_BACKEND_ROOT`, migrates, collectstatic, then gunicorn.
 
-`run_chantlab_frontend.sh` `cd`s to `CHANTLAB_FRONTEND_ROOT`, writes `BACKEND_URL` into `src/app/config.json` with `jq`, then `ng serve`. Do not edit `index.html` or `config.json` after pull.
+`run_chantlab_frontend.sh` `cd`s to `CHANTLAB_FRONTEND_ROOT`, writes `BACKEND_URL` into `src/app/config.json` with `jq`, writes `<base href>` in `src/index.html` from `FORCE_SCRIPT_NAME` (or the path prefix of `BACKEND_URL`), then `ng serve`. Do not edit `index.html` or `config.json` after pull.
 
 ### 7. Supervisord
 
